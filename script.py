@@ -30,47 +30,39 @@ RENAME_MAPPING = {
 
 def read_nationality_codes(csv_file_path):
     """
-    Reads nationality codes from a CSV file and returns a dictionary.
+    Reads a CSV file containing nationality codes and corresponding ICAO codes.
 
     Parameters:
-    - csv_file_path (str): Path to the CSV file.
+    - csv_file_path (str): The path to the CSV file.
 
     Returns:
-    - dict: Dictionary mapping nationality codes to ICAO codes.
+    - dict: A dictionary mapping nationality codes to ICAO codes.
     """
-    nationality_dict = {}
     with open(csv_file_path, newline="", encoding="utf-8") as csvfile:
         csv_reader = csv.DictReader(csvfile)
-        for row in csv_reader:
-            nationality_dict[row["รหัสสัญชาติ"]] = row["รหัส icao"]
-    return nationality_dict
+        return {row["รหัสสัญชาติ"]: row["รหัส icao"] for row in csv_reader}
 
 
 def process_and_save_excel(input_filename, output_filename):
-    # Read data from the input file
-    df = pd.read_excel(input_filename)
+    """
+    Processes an Excel file, renames columns, and saves the result to a new Excel file.
 
-    # Selecting and renaming columns
-    df = df[SELECTED_COLUMNS]
+    Parameters:
+    - input_filename (str): The path to the input Excel file.
+    - output_filename (str, optional): The path to the output Excel file. If not provided, a default name is used.
 
-    # Renaming columns
+    Returns:
+    - None
+    """
+    df = pd.read_excel(input_filename)[SELECTED_COLUMNS]
     df = df.rename(columns=RENAME_MAPPING)
 
-    # Add a new column 'เบอร์โทรศัพท์\nPhone No.' with NaN values
     df["เบอร์โทรศัพท์\nPhone No."] = ""
+    df["สัญชาติ\nNationality *"] = df["สัญชาติ\nNationality *"].map(nationality_dict)
 
-    df["สัญชาติ\nNationality *"] = df["สัญชาติ\nNationality *"].apply(
-        lambda x: nationality_dict.get(x, None)
-    )
-
-    # Split the input filename into root and extension
     root, ext = os.path.splitext(input_filename)
+    output_filename = output_filename or f"{root}_processed.xlsx"
 
-    # Determine the output filename
-    if output_filename is None:
-        output_filename = root + "_processed.xlsx"
-
-    # Save the processed data to a new Excel file
     df.to_excel(output_filename, index=False, sheet_name="แบบแจ้งที่พัก Inform Accom")
 
 
@@ -80,8 +72,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     input_filename = sys.argv[1]
-
-    # Output filename is an optional argument
     output_filename = sys.argv[2] if len(sys.argv) > 2 else None
 
     nationality_dict = read_nationality_codes("data/config/nationality_code.csv")
