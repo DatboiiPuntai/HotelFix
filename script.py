@@ -1,7 +1,8 @@
-import pandas as pd
 import csv
 import sys
 import os
+
+import pandas as pd
 
 csv_file_path = "data/config/nationality_code.csv"
 nationality_dict = {}
